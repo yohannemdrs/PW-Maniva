@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Propriedade = require('../models/propriedade');
+const { autenticarToken, autorizarRole } = require('../middleware/auth'); 
 
-// Middleware para buscar propriedade por ID
 async function getPropriedade(req, res, next) {
     let propriedade;
     try {
@@ -17,8 +17,8 @@ async function getPropriedade(req, res, next) {
     next();
 }
 
-// Rota: Obter todas as propriedades (READ ALL)
-router.get('/', async (req, res) => {
+// Rota: Obter todas as propriedades (READ ALL) - ACESSO A AMBOS OS PAPÉIS
+router.get('/', autenticarToken, autorizarRole(['agricultor', 'co-agricultor']), async (req, res) => {
     try {
         const propriedades = await Propriedade.find();
         res.json(propriedades);
@@ -27,29 +27,17 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Rota: Obter uma propriedade específica (READ ONE)
-router.get('/:id', getPropriedade, (req, res) => {
+// Rota: Obter uma propriedade específica (READ ONE) - ACESSO A AMBOS OS PAPÉIS
+router.get('/:id', autenticarToken, autorizarRole(['agricultor', 'co-agricultor']), getPropriedade, (req, res) => {
     res.json(res.propriedade);
 });
 
-// Rota: Criar uma nova propriedade (CREATE)
-router.post('/', async (req, res) => {
+// Rota: Criar uma nova propriedade (CREATE) - APENAS AGRICULTORES
+router.post('/', autenticarToken, autorizarRole(['agricultor']), async (req, res) => {
     const { nome, descricao, areaHectares, culturaPrincipal, localizacao, tags } = req.body;
-
-    // Validação básica para GeoJSON Point
-    if (!localizacao || localizacao.type !== 'Point' || !Array.isArray(localizacao.coordinates) || localizacao.coordinates.length !== 2) {
-        return res.status(400).json({ message: 'Formato de localização inválido. Esperado { type: "Point", coordinates: [longitude, latitude] }' });
-    }
-
     const propriedade = new Propriedade({
-        nome,
-        descricao,
-        areaHectares,
-        culturaPrincipal,
-        localizacao,
-        tags
+        nome, descricao, areaHectares, culturaPrincipal, localizacao, tags
     });
-
     try {
         const novaPropriedade = await propriedade.save();
         res.status(201).json(novaPropriedade);
@@ -58,9 +46,8 @@ router.post('/', async (req, res) => {
     }
 });
 
-// Rota: Atualizar uma propriedade (UPDATE)
-router.patch('/:id', getPropriedade, async (req, res) => {
-    // Atualiza apenas os campos que foram enviados na requisição
+// Rota: Atualizar uma propriedade (UPDATE) - APENAS AGRICULTORES
+router.patch('/:id', autenticarToken, autorizarRole(['agricultor']), getPropriedade, async (req, res) => {
     if (req.body.nome != null) {
         res.propriedade.nome = req.body.nome;
     }
@@ -74,18 +61,13 @@ router.patch('/:id', getPropriedade, async (req, res) => {
         res.propriedade.culturaPrincipal = req.body.culturaPrincipal;
     }
     if (req.body.localizacao != null) {
-        // Validação básica para GeoJSON Point na atualização
-        if (req.body.localizacao.type !== 'Point' || !Array.isArray(req.body.localizacao.coordinates) || req.body.localizacao.coordinates.length !== 2) {
-            return res.status(400).json({ message: 'Formato de localização inválido na atualização.' });
-        }
         res.propriedade.localizacao = req.body.localizacao;
     }
     if (req.body.tags != null) {
         res.propriedade.tags = req.body.tags;
     }
 
-    res.propriedade.updatedAt = Date.now(); // Atualiza o timestamp de atualização
-
+    res.propriedade.updatedAt = Date.now();
     try {
         const propriedadeAtualizada = await res.propriedade.save();
         res.json(propriedadeAtualizada);
@@ -94,8 +76,8 @@ router.patch('/:id', getPropriedade, async (req, res) => {
     }
 });
 
-// Rota: Deletar uma propriedade (DELETE)
-router.delete('/:id', getPropriedade, async (req, res) => {
+// Rota: Deletar uma propriedade (DELETE) - APENAS AGRICULTORES
+router.delete('/:id', autenticarToken, autorizarRole(['agricultor']), getPropriedade, async (req, res) => {
     try {
         await Propriedade.deleteOne({ _id: res.propriedade._id });
         res.json({ message: 'Propriedade excluída com sucesso' });
