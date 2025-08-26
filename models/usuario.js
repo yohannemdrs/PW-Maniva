@@ -23,8 +23,13 @@ const UsuarioSchema = new mongoose.Schema({
     },
     csa: {
         type: Schema.Types.ObjectId,
-        ref: 'CSA', // Referencia o modelo 'CSA'
+        ref: 'CSA',
         default: null
+    },
+    role: { // <<<<<<<<<< ESTE CAMPO ESTAVA FALTANDO
+        type: String,
+        enum: ['agricultor', 'co-agricultor'],
+        default: 'co-agricultor'
     },
     createdAt: {
         type: Date,

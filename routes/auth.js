@@ -13,12 +13,11 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ message: 'Email ou senha inválidos' });
         }
 
-        // Cria o token com o ID do usuário e seu papel (role)
         const token = jwt.sign(
-            { id: usuario._id, role: usuario.role },
-            process.env.JWT_SECRET || 'meu-segredo-super-secreto',
-            { expiresIn: '1h' } // Token expira em 1 hora
-        );
+        { id: usuario._id, role: usuario.role },
+        process.env.JWT_SECRET || 'meu-segredo-super-secreto',
+        { expiresIn: '1h' }
+);
 
         res.json({ message: 'Login bem-sucedido', token: token });
     } catch (err) {

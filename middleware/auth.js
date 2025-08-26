@@ -3,6 +3,8 @@ const jwt = require('jsonwebtoken');
 // Middleware para verificar o token JWT
 function autenticarToken(req, res, next) {
     const authHeader = req.headers['authorization'];
+    console.log('Authorization Header Recebido:', authHeader); // <<< ADICIONE ESTA LINHA
+
     const token = authHeader && authHeader.split(' ')[1]; // Formato "Bearer TOKEN"
 
     if (token == null) {
@@ -13,7 +15,7 @@ function autenticarToken(req, res, next) {
         if (err) {
             return res.status(403).json({ message: 'Token inválido ou expirado.' });
         }
-        req.usuario = usuario; // Salva as informações do usuário no objeto de requisição
+        req.usuario = usuario;
         next();
     });
 }

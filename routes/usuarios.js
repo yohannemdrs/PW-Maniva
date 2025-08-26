@@ -5,7 +5,7 @@ const CSA = require('../models/csa');
 
 router.post('/', async (req, res) => {
     try {
-        const { nome, email, senha, cidade_csa } = req.body;
+        const { nome, email, senha, role, cidade_csa } = req.body; // <<<< ADICIONE O 'role' AQUI
         
         let csaId = null;
         if (cidade_csa) {
@@ -16,7 +16,8 @@ router.post('/', async (req, res) => {
             csaId = csaExistente._id;
         }
 
-        const novoUsuario = new Usuario({ nome, email, senha, csa: csaId });
+        // <<<< PASSE O 'role' PARA O CONSTRUTOR DO NOVO USUARIO
+        const novoUsuario = new Usuario({ nome, email, senha, role, csa: csaId });
         await novoUsuario.save();
         res.status(201).json({ message: 'Usuário registrado com sucesso!' });
     } catch (err) {
@@ -29,7 +30,6 @@ router.post('/', async (req, res) => {
 
 router.get('/', async (req, res) => {
     try {
-        // Popula o campo 'csa' com os dados da CSA em vez do ID
         const usuarios = await Usuario.find().select('-senha').populate('csa', 'cidade');
         res.json(usuarios);
     } catch (err) {
