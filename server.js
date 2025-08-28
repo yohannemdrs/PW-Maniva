@@ -18,7 +18,9 @@ const propriedadesRouter = require('./routes/propriedades');
 const usuariosRouter = require('./routes/usuarios');
 const csaRouter = require('./routes/csa');
 const authRouter = require('./routes/auth');
+const cestasRouter = require('./routes/cestas');
 
+app.use('/cestas', cestasRouter);
 app.use('/api/usuarios', usuariosRouter);
 app.use('/api/csa', csaRouter);
 app.use('/api/propriedades', propriedadesRouter); 
