@@ -1,17 +1,25 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-const CSASchema = new mongoose.Schema({
+const CSASchema = new Schema({
     cidade: {
         type: String,
-        required: [true, 'O nome da cidade é obrigatório para a CSA'],
-        unique: true, // Garante que apenas uma CSA exista por cidade
-        trim: true,
+        required: [true, 'A cidade da CSA é obrigatória'],
         lowercase: true,
+        trim: true
+    },
+    estado: {
+        type: String,
+        required: [true, 'O estado da CSA é obrigatório'],
+        lowercase: true,
+        trim: true
     },
     createdAt: {
         type: Date,
-        default: Date.now,
+        default: Date.now
     }
 });
+
+CSASchema.index({ cidade: 1, estado: 1 }, { unique: true });
 
 module.exports = mongoose.model('CSA', CSASchema);
