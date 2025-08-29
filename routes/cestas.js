@@ -60,7 +60,7 @@ res.status(500).json({ message: err.message });
 }
 });
 
-// Rota: Obter uma cesta específica
+// Rota pegar uma cesta específica
 router.get('/:id', getCesta, (req, res) => {
 res.json(res.cesta);
 });
@@ -84,25 +84,23 @@ res.status(400).json({ message: err.message });
 }
 });
 
-// Rota: Atualizar uma cesta - APENAS CO-AGRICULTORES
 router.patch('/:id', autenticarToken, autorizarRole(['co-agricultor']), upload.single('imagem'), getCesta, async (req, res) => {
-if (req.body.nome != null) res.cesta.nome = req.body.nome;
-if (req.body.descricao != null) res.cesta.descricao = req.body.descricao;
-if (req.body.produtos != null) res.cesta.produtos = req.body.produtos;
-if (req.body.preco != null) res.cesta.preco = req.body.preco;
-if (req.body.csa != null) res.cesta.csa = req.body.csa;
-if (req.file) res.cesta.imagem = req.file.filename;
+    if (req.body.nome && req.body.nome.trim() !== "") res.cesta.nome = req.body.nome;
+    if (req.body.descricao && req.body.descricao.trim() !== "") res.cesta.descricao = req.body.descricao;
+    if (req.body.produtos && req.body.produtos.length > 0) res.cesta.produtos = req.body.produtos;
+    if (req.body.preco && !isNaN(req.body.preco)) res.cesta.preco = req.body.preco;
+    if (req.body.csa && req.body.csa.trim() !== "") res.cesta.csa = req.body.csa;
+    if (req.file) res.cesta.imagem = req.file.filename;
 
-
-try {
-const cestaAtualizada = await res.cesta.save();
-res.json(cestaAtualizada);
-} catch (err) {
-res.status(400).json({ message: err.message });
-}
+    try {
+        const cestaAtualizada = await res.cesta.save();
+        res.json(cestaAtualizada);
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
 });
 
-// Rota: Deletar uma cesta - APENAS CO-AGRICULTORES
+// Rota deletar uma cesta - APENAS CO-AGRICULTORES
 router.delete('/:id', autenticarToken, autorizarRole(['co-agricultor']), getCesta, async (req, res) => {
 try {
 await Cesta.deleteOne({ _id: res.cesta._id });

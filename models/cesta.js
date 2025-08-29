@@ -27,7 +27,7 @@ ref: 'CSA',
 required: [true, 'A CSA da cesta é obrigatória']
 },
 imagem: {
-type: String, // caminho/arquivo da imagem
+type: String, 
 trim: true
 },
 createdAt: {

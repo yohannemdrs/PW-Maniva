@@ -22,12 +22,12 @@ const PropriedadeSchema = new mongoose.Schema({
     // Campo para localização GeoJSON (Point)
     localizacao: {
         type: {
-            type: String, // Tipo GeoJSON, deve ser 'Point'
+            type: String, 
             enum: ['Point'],
             required: true
         },
         coordinates: {
-            type: [Number], // [longitude, latitude]
+            type: [Number], // longitude, latitude
             required: true,
             validate: {
                 validator: function(v) {
@@ -37,10 +37,9 @@ const PropriedadeSchema = new mongoose.Schema({
             }
         }
     },
-    // Campos para Full-text Search
     tags: {
         type: [String],
-        index: true // Opcional: para buscas simples por tags
+        index: true 
     },
     // Timestamps automáticos
     createdAt: {
@@ -56,7 +55,6 @@ const PropriedadeSchema = new mongoose.Schema({
 // Criar índice 2dsphere para consultas geoespaciais
 PropriedadeSchema.index({ localizacao: '2dsphere' });
 
-// Criar índice de texto para Full-text Search
 PropriedadeSchema.index({ 
     nome: 'text', 
     descricao: 'text', 

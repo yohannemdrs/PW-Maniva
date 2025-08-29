@@ -3,10 +3,20 @@ const router = express.Router();
 const Usuario = require('../models/usuario');
 const CSA = require('../models/csa'); 
 const { autenticarToken, autorizarRole } = require('../middleware/auth'); 
+const yup = require('yup');
 
-// Rota de cadastro
+const usuarioSchema = yup.object().shape({
+    nome: yup.string().required('O nome é obrigatório'),
+    email: yup.string().email('Email inválido').required('O email é obrigatório'),
+    senha: yup.string().min(6, 'A senha deve ter no mínimo 6 caracteres').required('A senha é obrigatória'),
+    role: yup.string().oneOf(['co-agricultor', 'agricultor', 'admin']).required('A role é obrigatória'),
+    cidade_csa: yup.string().required('A cidade da CSA é obrigatória'),
+    estado_csa: yup.string().required('O estado da CSA é obrigatório')
+});
+
 router.post('/', async (req, res) => {
     try {
+        await usuarioSchema.validate(req.body, { abortEarly: false });
         const { nome, email, senha, role, cidade_csa, estado_csa } = req.body;
         
         let csaId = null;
@@ -20,15 +30,17 @@ router.post('/', async (req, res) => {
             }
             csaId = csaExistente._id;
         }
-
         const novoUsuario = new Usuario({ nome, email, senha, role, csa: csaId });
         await novoUsuario.save();
         res.status(201).json({ message: 'Usuário registrado com sucesso!' });
     } catch (err) {
+        if (err.name === 'ValidationError') {
+            return res.status(400).json({ errors: err.errors });
+        }
         if (err.code === 11000) {
             return res.status(409).json({ message: 'Este email já está em uso.' });
         }
-        res.status(400).json({ message: err.message });
+        res.status(500).json({ message: err.message });
     }
 });
 

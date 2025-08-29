@@ -26,7 +26,7 @@ const UsuarioSchema = new mongoose.Schema({
         ref: 'CSA',
         default: null
     },
-    role: { // <<<<<<<<<< ESTE CAMPO ESTAVA FALTANDO
+    role: { 
         type: String,
         enum: ['agricultor', 'co-agricultor'],
         default: 'co-agricultor'
