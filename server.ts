@@ -1,7 +1,8 @@
-require("dotenv").config();
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
+import dotenv from 'dotenv';
+dotenv.config();
+import express, { Request, Response } from 'express';
+import mongoose from 'mongoose';
+import cors from 'cors';
 
 const app = express();
 const PORT = process.env.PORT || 5000; 
@@ -10,15 +11,15 @@ const PORT = process.env.PORT || 5000;
 app.use(cors()); 
 app.use(express.json()); 
 
-mongoose.connect(process.env.MONGO_URI)
+mongoose.connect(process.env.MONGO_URI as string)
     .then(() => console.log("Conectado ao MongoDB Atlas!"))
     .catch(err => console.error("Erro de conexão com MongoDB Atlas:", err));
 
-const propriedadesRouter = require('./routes/propriedades');
-const usuariosRouter = require('./routes/usuarios');
-const csaRouter = require('./routes/csa');
-const authRouter = require('./routes/auth');
-const cestasRouter = require('./routes/cestas');
+import propriedadesRouter from './routes/propriedades';
+import usuariosRouter from './routes/usuarios';
+import csaRouter from './routes/csa';
+import authRouter from './routes/auth';
+import cestasRouter from './routes/cestas';
 
 app.use('/cestas', cestasRouter);
 app.use('/api/usuarios', usuariosRouter);
@@ -26,10 +27,12 @@ app.use('/api/csa', csaRouter);
 app.use('/api/propriedades', propriedadesRouter); 
 app.use('/api/auth', authRouter);
 
-app.get("/", (req, res) => {
+app.get("/", (req: Request, res: Response) => {
     res.send("API de Propriedades está funcionando!");
 });
 
 app.listen(PORT, () => {
     console.log(`Servidor rodando na porta ${PORT}`);
 });
+
+

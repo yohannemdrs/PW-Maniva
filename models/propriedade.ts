@@ -1,6 +1,22 @@
-const mongoose = require('mongoose');
+import mongoose, { Schema, Document } from 'mongoose';
 
-const PropriedadeSchema = new mongoose.Schema({
+interface ILocalizacao {
+    type: 'Point';
+    coordinates: [number, number]; // [longitude, latitude]
+}
+
+export interface IPropriedadeDocument extends Document {
+    nome: string;
+    descricao?: string;
+    areaHectares: number;
+    culturaPrincipal?: string;
+    localizacao: ILocalizacao;
+    tags?: string[];
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+const PropriedadeSchema = new Schema<IPropriedadeDocument>({
     nome: {
         type: String,
         required: [true, 'O nome da propriedade é obrigatório'],
@@ -19,7 +35,6 @@ const PropriedadeSchema = new mongoose.Schema({
         type: String,
         trim: true
     },
-    // Campo para localização GeoJSON (Point)
     localizacao: {
         type: {
             type: String, 
@@ -30,8 +45,8 @@ const PropriedadeSchema = new mongoose.Schema({
             type: [Number], // longitude, latitude
             required: true,
             validate: {
-                validator: function(v) {
-                    return v.length === 2 && typeof v[0] === 'number' && typeof v[1] === 'number';
+                validator: function(v: any) {
+                    return Array.isArray(v) && v.length === 2 && typeof v[0] === 'number' && typeof v[1] === 'number';
                 },
                 message: 'As coordenadas devem ser um array de [longitude, latitude]'
             }
@@ -41,7 +56,6 @@ const PropriedadeSchema = new mongoose.Schema({
         type: [String],
         index: true 
     },
-    // Timestamps automáticos
     createdAt: {
         type: Date,
         default: Date.now
@@ -52,7 +66,6 @@ const PropriedadeSchema = new mongoose.Schema({
     }
 });
 
-// Criar índice 2dsphere para consultas geoespaciais
 PropriedadeSchema.index({ localizacao: '2dsphere' });
 
 PropriedadeSchema.index({ 
@@ -70,4 +83,6 @@ PropriedadeSchema.index({
     name: 'text_search_index' 
 });
 
-module.exports = mongoose.model('Propriedade', PropriedadeSchema);
+export default mongoose.model<IPropriedadeDocument>('Propriedade', PropriedadeSchema);
+
+

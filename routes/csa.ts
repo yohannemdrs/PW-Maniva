@@ -1,48 +1,50 @@
-const express = require('express');
-const router = express.Router();
-const CSA = require('../models/csa');
-const { autenticarToken } = require('../middleware/auth'); 
+import express, { Request, Response, NextFunction } from 'express';
+import CSA, { ICSADocument } from '../models/csa';
+import { autenticarToken } from '../middleware/auth';
 
-router.post('/', async (req, res) => {
+const router = express.Router();
+
+router.post('/', async (req: Request, res: Response) => {
     const { cidade, estado } = req.body;
     
     try {
-        const novaCSA = new CSA({ 
-            cidade: cidade.toLowerCase(), 
+        const novaCSA: ICSADocument = new CSA({
+            cidade: cidade.toLowerCase(),
             estado: estado.toLowerCase()
         });
 
         await novaCSA.save();
         res.status(201).json({ message: 'CSA registrada com sucesso!', data: novaCSA });
 
-    } catch (err) {
-        // Agora, o erro de conflito (11000) será para a combinação de cidade e estado
-        if (err.code ==1000) {
+    } catch (err: any) {
+        if (err.code === 11000) {
             return res.status(409).json({ message: 'Uma CSA para esta cidade e estado já existe.' });
         }
         res.status(400).json({ message: err.message });
     }
 });
 
-router.get('/', async (req, res) => {
+router.get('/', async (req: Request, res: Response) => {
     try {
-        const csas = await CSA.find();
+        const csas: ICSADocument[] = await CSA.find();
         res.json(csas);
-    } catch (err) {
+    } catch (err: any) {
         res.status(500).json({ message: err.message });
     }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', autenticarToken, async (req: Request, res: Response) => {
     try {
         const csa = await CSA.findByIdAndDelete(req.params.id);
         if (!csa) {
             return res.status(404).json({ message: 'CSA não encontrada' });
         }
         res.json({ message: 'CSA excluída com sucesso' });
-    } catch (err) {
+    } catch (err: any) {
         res.status(500).json({ message: err.message });
     }
 });
 
-module.exports = router;
+export default router;
+
+

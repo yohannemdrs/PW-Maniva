@@ -1,8 +1,17 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
-const Schema = mongoose.Schema;
+import mongoose, { Schema, Document } from 'mongoose';
+import bcrypt from 'bcrypt';
 
-const UsuarioSchema = new mongoose.Schema({
+export interface IUsuarioDocument extends Document {
+    nome: string;
+    email: string;
+    senha: string;
+    csa?: mongoose.Types.ObjectId;
+    role: 'agricultor' | 'co-agricultor';
+    createdAt: Date;
+    comparePassword: (candidatePassword: string) => Promise<boolean>;
+}
+
+const UsuarioSchema = new Schema<IUsuarioDocument>({
     nome: {
         type: String,
         required: [true, 'O nome é obrigatório'],
@@ -37,7 +46,7 @@ const UsuarioSchema = new mongoose.Schema({
     }
 });
 
-UsuarioSchema.pre('save', async function(next) {
+UsuarioSchema.pre<IUsuarioDocument>('save', async function(next) {
     if (!this.isModified('senha')) {
         return next();
     }
@@ -45,13 +54,15 @@ UsuarioSchema.pre('save', async function(next) {
         const salt = await bcrypt.genSalt(10);
         this.senha = await bcrypt.hash(this.senha, salt);
         next();
-    } catch (err) {
+    } catch (err: any) {
         next(err);
     }
 });
 
-UsuarioSchema.methods.comparePassword = function(candidatePassword) {
-    return bcrypt.compare(candidatePassword, this.senha);
+UsuarioSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
+    return await bcrypt.compare(candidatePassword, this.senha);
 };
 
-module.exports = mongoose.model('Usuario', UsuarioSchema);
+export default mongoose.model<IUsuarioDocument>('Usuario', UsuarioSchema);
+
+

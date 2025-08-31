@@ -1,7 +1,12 @@
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+import mongoose, { Schema, Document } from 'mongoose';
 
-const CSASchema = new Schema({
+export interface ICSADocument extends Document {
+    cidade: string;
+    estado: string;
+    createdAt: Date;
+}
+
+const CSASchema = new Schema<ICSADocument>({
     cidade: {
         type: String,
         required: [true, 'A cidade da CSA é obrigatória'],
@@ -22,4 +27,6 @@ const CSASchema = new Schema({
 
 CSASchema.index({ cidade: 1, estado: 1 }, { unique: true });
 
-module.exports = mongoose.model('CSA', CSASchema);
+export default mongoose.model<ICSADocument>('CSA', CSASchema);
+
+
