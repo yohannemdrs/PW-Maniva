@@ -33,7 +33,7 @@ router.get('/', async (req: Request, res: Response) => {
     }
 });
 
-router.delete('/:id', autenticarToken, async (req: Request, res: Response) => {
+router.delete('/:id', async (req: Request, res: Response) => {
     try {
         const csa = await CSA.findByIdAndDelete(req.params.id);
         if (!csa) {

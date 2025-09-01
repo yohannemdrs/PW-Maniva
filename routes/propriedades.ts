@@ -7,7 +7,7 @@ const router = express.Router();
 declare global {
     namespace Express {
         interface Response {
-            propriedade?: IPropriedadeDocument; // Define a propriedade propriedade no objeto Response
+            propriedade?: IPropriedadeDocument; // Define a propriedade (propriedade) no objeto Response
         }
     }
 }
@@ -27,7 +27,7 @@ async function getPropriedade(req: Request, res: Response, next: NextFunction) {
 }
 
 // Rota: Obter todas as propriedades (READ ALL) - ACESSO A AMBOS OS PAPÉIS
-router.get('/', autenticarToken, autorizarRole(['agricultor', 'co-agricultor']), async (req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
     try {
         const propriedades: IPropriedadeDocument[] = await Propriedade.find();
         res.json(propriedades);
@@ -37,7 +37,7 @@ router.get('/', autenticarToken, autorizarRole(['agricultor', 'co-agricultor']),
 });
 
 // Rota: Obter uma propriedade específica (READ ONE) - ACESSO A AMBOS OS PAPÉIS
-router.get('/:id', autenticarToken, autorizarRole(['agricultor', 'co-agricultor']), getPropriedade, (req: Request, res: Response) => {
+router.get('/:id', getPropriedade, (req: Request, res: Response) => {
     res.json(res.propriedade);
 });
 
@@ -119,5 +119,3 @@ router.get('/search/:text', async (req: Request, res: Response) => {
 });
 
 export default router;
-
-
