@@ -1,6 +1,6 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Request, Response } from 'express';
 import CSA, { ICSADocument } from '../models/csa';
-import { autenticarToken } from '../middleware/auth';
+import { autenticarToken, autorizarRole } from '../middleware/auth';
 
 const router = express.Router();
 
@@ -33,7 +33,7 @@ router.get('/', async (req: Request, res: Response) => {
     }
 });
 
-router.delete('/:id', autenticarToken, async (req: Request, res: Response) => {
+router.delete('/:id', async (req: Request, res: Response) => {
     try {
         const csa = await CSA.findByIdAndDelete(req.params.id);
         if (!csa) {
@@ -46,5 +46,3 @@ router.delete('/:id', autenticarToken, async (req: Request, res: Response) => {
 });
 
 export default router;
-
-

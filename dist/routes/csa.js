@@ -5,7 +5,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const csa_1 = __importDefault(require("../models/csa"));
-const auth_1 = require("../middleware/auth");
 const router = express_1.default.Router();
 router.post('/', async (req, res) => {
     const { cidade, estado } = req.body;
@@ -33,7 +32,7 @@ router.get('/', async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 });
-router.delete('/:id', auth_1.autenticarToken, async (req, res) => {
+router.delete('/:id', async (req, res) => {
     try {
         const csa = await csa_1.default.findByIdAndDelete(req.params.id);
         if (!csa) {

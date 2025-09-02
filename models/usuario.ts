@@ -46,6 +46,10 @@ const UsuarioSchema = new Schema<IUsuarioDocument>({
     }
 });
 
+
+ //verifica se a senha do usuário foi modificada e gera uma
+ // sequência aleatória de caracteres
+
 UsuarioSchema.pre<IUsuarioDocument>('save', async function(next) {
     if (!this.isModified('senha')) {
         return next();
@@ -58,7 +62,8 @@ UsuarioSchema.pre<IUsuarioDocument>('save', async function(next) {
         next(err);
     }
 });
-
+//usa a biblioteca bcrypt para comparar a senha que o usuário digitou 
+//  com a senha que está criptografada no banco de dados
 UsuarioSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
     return await bcrypt.compare(candidatePassword, this.senha);
 };

@@ -47,7 +47,7 @@ const PropriedadeSchema = new mongoose_1.Schema({
     areaHectares: {
         type: Number,
         required: [true, 'A área em hectares é obrigatória'],
-        min: [0, 'A área não pode ser negativa']
+        min: [3, 'A área não pode ser negativa']
     },
     culturaPrincipal: {
         type: String,

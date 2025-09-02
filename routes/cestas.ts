@@ -11,7 +11,7 @@ interface CestaRequestBody {
     descricao?: string;
     produtos: string[];
     preco: number;
-    csa: string; // Assuming CSA ID is passed as a string
+    csa: string; 
 }
 
 declare global {

@@ -36,138 +36,109 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = __importDefault(require("express"));
-const usuario_1 = __importDefault(require("../models/usuario"));
-const csa_1 = __importDefault(require("../models/csa"));
+const express_1 = require("express");
 const yup = __importStar(require("yup"));
-const router = express_1.default.Router();
-const usuarioSchema = yup.object().shape({
-    nome: yup.string().required('O nome é obrigatório'),
-    email: yup.string().email('Email inválido').required('O email é obrigatório'),
-    senha: yup.string().min(6, 'A senha deve ter no mínimo 6 caracteres'), // Senha não é required aqui para permitir patch sem senha
-    role: yup.string().oneOf(['co-agricultor', 'agricultor', 'admin']).required('A role é obrigatória'),
-    cidade_csa: yup.string().when('role', {
-        is: (role) => role === 'co-agricultor' || role === 'agricultor',
-        then: (schema) => schema.required('A cidade da CSA é obrigatória para co-agricultores e agricultores'),
-        otherwise: (schema) => schema.notRequired()
-    }),
-    estado_csa: yup.string().when('role', {
-        is: (role) => role === 'co-agricultor' || role === 'agricultor',
-        then: (schema) => schema.required('O estado da CSA é obrigatório para co-agricultores e agricultores'),
-        otherwise: (schema) => schema.notRequired()
-    })
+const mongoose_1 = __importDefault(require("mongoose"));
+const bcrypt_1 = __importDefault(require("bcrypt"));
+const auth_1 = require("../middleware/auth");
+const router = (0, express_1.Router)();
+const usuarioSchema = new mongoose_1.default.Schema({
+    nome: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    senha: { type: String, required: true },
+    role: {
+        type: String,
+        enum: ["co-agricultor", "agricultor"],
+        default: "co-agricultor"
+    }
 });
-router.post('/', async (req, res) => {
+const Usuario = mongoose_1.default.model("usuario", usuarioSchema);
+const usuarioValidation = yup.object().shape({
+    nome: yup.string().required("Nome é obrigatório"),
+    email: yup.string().email("E-mail inválido").required("E-mail é obrigatório"),
+    senha: yup.string().min(6, "Senha deve ter no mínimo 6 caracteres").required("Senha é obrigatória"),
+    role: yup.string().oneOf(["admin", "co-agricultor", "agricultor"]).optional()
+});
+router.post("/", async (req, res) => {
     try {
-        await usuarioSchema.validate(req.body, { abortEarly: false });
-        const { nome, email, senha, role, cidade_csa, estado_csa } = req.body;
-        let csaId = null;
-        if (cidade_csa && estado_csa) {
-            const csaExistente = await csa_1.default.findOne({
-                cidade: cidade_csa.toLowerCase(),
-                estado: estado_csa.toLowerCase()
-            });
-            if (!csaExistente) {
-                return res.status(404).json({ message: 'CSA para esta cidade e estado não encontrada.' });
-            }
-            csaId = csaExistente._id;
-        }
-        const novoUsuario = new usuario_1.default({ nome, email, senha, role, csa: csaId });
+        await usuarioValidation.validate(req.body);
+        // Criptografar senha antes de salvar
+        const hashedPassword = await bcrypt_1.default.hash(req.body.senha, 10);
+        const novoUsuario = new Usuario({
+            ...req.body,
+            senha: hashedPassword // substitui pela senha criptografada
+        });
         await novoUsuario.save();
-        res.status(201).json({ message: 'Usuário registrado com sucesso!' });
-    }
-    catch (err) {
-        if (err.name === 'ValidationError') {
-            return res.status(400).json({ errors: err.errors });
-        }
-        if (err.code === 11000) {
-            return res.status(409).json({ message: 'Este email já está em uso.' });
-        }
-        res.status(500).json({ message: err.message });
-    }
-});
-// Rota para listar todos os usuários de uma CSA específica
-router.get('/csa/:csaId', async (req, res) => {
-    try {
-        const csaId = req.params.csaId;
-        const usuarios = await usuario_1.default.find({ csa: csaId }).select('-senha').populate('csa', 'cidade estado');
-        if (usuarios.length === 0) {
-            return res.status(404).json({ message: 'Nenhum usuário encontrado para esta CSA.' });
-        }
-        res.json(usuarios);
-    }
-    catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-});
-// Rota para obter todos os usuários
-router.get('/', async (req, res) => {
-    try {
-        const usuarios = await usuario_1.default.find().select('-senha').populate('csa', 'cidade estado');
-        res.json(usuarios);
-    }
-    catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-});
-// Rota para obter um usuário específico
-router.get('/:id', async (req, res) => {
-    try {
-        const usuario = await usuario_1.default.findById(req.params.id).select('-senha').populate('csa', 'cidade estado');
-        if (!usuario) {
-            return res.status(404).json({ message: 'Usuário não encontrado' });
-        }
-        res.json(usuario);
-    }
-    catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-});
-// Rota para atualizar um usuário (Sem proteção)
-router.patch('/:id', async (req, res) => {
-    try {
-        const usuario = await usuario_1.default.findById(req.params.id);
-        if (!usuario) {
-            return res.status(404).json({ message: 'Usuário não encontrado' });
-        }
-        if (req.body.nome != null) {
-            usuario.nome = req.body.nome;
-        }
-        if (req.body.email != null) {
-            const emailExistente = await usuario_1.default.findOne({ email: req.body.email.toLowerCase() });
-            if (emailExistente && emailExistente._id.toString() !== usuario._id.toString()) {
-                return res.status(409).json({ message: 'Este email já está em uso.' });
-            }
-            usuario.email = req.body.email;
-        }
-        if (req.body.cidade_csa != null && req.body.estado_csa != null) {
-            const csaExistente = await csa_1.default.findOne({
-                cidade: req.body.cidade_csa.toLowerCase(),
-                estado: req.body.estado_csa.toLowerCase()
-            });
-            if (!csaExistente) {
-                return res.status(404).json({ message: 'CSA para esta cidade e estado não encontrada.' });
-            }
-            usuario.csa = csaExistente._id;
-        }
-        const usuarioAtualizado = await usuario.save();
-        res.json(usuarioAtualizado);
+        res.status(201).json({ message: "Usuário criado com sucesso!" });
     }
     catch (err) {
         res.status(400).json({ message: err.message });
     }
 });
-// Rota para deletar um usuário (Sem proteção)
-router.delete('/:id', async (req, res) => {
+// Listar todos usuários 
+router.get("/", async (req, res) => {
     try {
-        const usuario = await usuario_1.default.findByIdAndDelete(req.params.id);
-        if (!usuario) {
-            return res.status(404).json({ message: 'Usuário não encontrado' });
-        }
-        res.json({ message: 'Usuário excluído com sucesso' });
+        const usuarios = await Usuario.find();
+        res.json(usuarios);
     }
     catch (err) {
-        res.status(500).json({ message: err.message });
+        res.status(500).json({ message: "Erro ao buscar usuários" });
+    }
+});
+// Buscar usuário por ID
+router.get("/:id", auth_1.autenticarToken, async (req, res) => {
+    try {
+        // Validação de ID
+        if (!mongoose_1.default.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({ message: "ID inválido fornecido" });
+        }
+        const usuario = await Usuario.findById(req.params.id);
+        if (!usuario)
+            return res.status(404).json({ message: "Usuário não encontrado" });
+        res.json(usuario);
+    }
+    catch (err) {
+        res.status(500).json({ message: "Erro ao buscar usuário" });
+    }
+});
+// Atualizar usuário 
+router.put("/:id", auth_1.autenticarToken, async (req, res) => {
+    try {
+        if (!mongoose_1.default.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({ message: "ID inválido fornecido" });
+        }
+        // Se não for admin, só pode atualizar o próprio usuário
+        if (req.user.role !== "admin" && req.user.id !== req.params.id) {
+            return res.status(403).json({ message: "Sem permissão para atualizar esse usuário" });
+        }
+        if (req.body.senha) {
+            req.body.senha = await bcrypt_1.default.hash(req.body.senha, 10); // recriptografa a nova senha
+        }
+        const usuario = await Usuario.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!usuario)
+            return res.status(404).json({ message: "Usuário não encontrado" });
+        res.json(usuario);
+    }
+    catch (err) {
+        res.status(400).json({ message: "Erro ao atualizar usuário" });
+    }
+});
+// Deletar usuário 
+router.delete("/:id", auth_1.autenticarToken, async (req, res) => {
+    try {
+        if (!mongoose_1.default.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({ message: "ID inválido fornecido" });
+        }
+        if (req.user.role !== "admin" && req.user.id !== req.params.id) {
+            return res.status(403).json({ message: "Sem permissão para deletar esse usuário" });
+        }
+        const usuario = await Usuario.findByIdAndDelete(req.params.id);
+        if (!usuario)
+            return res.status(404).json({ message: "Usuário não encontrado" });
+        res.json({ message: "Usuário deletado com sucesso" });
+    }
+    catch (err) {
+        res.status(500).json({ message: "Erro ao deletar usuário" });
     }
 });
 exports.default = router;

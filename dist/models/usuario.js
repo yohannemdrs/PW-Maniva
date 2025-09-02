@@ -72,6 +72,8 @@ const UsuarioSchema = new mongoose_1.Schema({
         default: Date.now
     }
 });
+//verifica se a senha do usuário foi modificada e gera uma
+// sequência aleatória de caracteres
 UsuarioSchema.pre('save', async function (next) {
     if (!this.isModified('senha')) {
         return next();
@@ -85,6 +87,8 @@ UsuarioSchema.pre('save', async function (next) {
         next(err);
     }
 });
+//usa a biblioteca bcrypt para comparar a senha que o usuário digitou 
+//  com a senha que está criptografada no banco de dados
 UsuarioSchema.methods.comparePassword = async function (candidatePassword) {
     return await bcrypt_1.default.compare(candidatePassword, this.senha);
 };
