@@ -38,5 +38,3 @@ function autorizarRole(rolesPermitidos: string[]) {
 }
 
 export { autenticarToken, autorizarRole };
-
-

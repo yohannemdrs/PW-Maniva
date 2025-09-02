@@ -1,6 +1,8 @@
 import express, { Request, Response, NextFunction } from 'express';
 import Propriedade, { IPropriedadeDocument } from '../models/propriedade';
 import { autenticarToken, autorizarRole } from '../middleware/auth';
+import { checkOverlap } from '../middleware/propertyValidation';
+import { getDistance } from 'geolib';
 
 const router = express.Router();
 
@@ -42,7 +44,7 @@ router.get('/:id', getPropriedade, (req: Request, res: Response) => {
 });
 
 // Rota: Criar uma nova propriedade (CREATE) - APENAS AGRICULTORES
-router.post('/', autenticarToken, autorizarRole(['agricultor']), async (req: Request, res: Response) => {
+router.post('/', autenticarToken, autorizarRole(['agricultor']), checkOverlap, async (req: Request, res: Response) => {
     const { nome, descricao, areaHectares, culturaPrincipal, localizacao, tags } = req.body;
     const propriedade: IPropriedadeDocument = new Propriedade({
         nome, descricao, areaHectares, culturaPrincipal, localizacao, tags
@@ -56,27 +58,26 @@ router.post('/', autenticarToken, autorizarRole(['agricultor']), async (req: Req
 });
 
 // Rota: Atualizar uma propriedade (UPDATE) - APENAS AGRICULTORES
-router.patch('/:id', autenticarToken, autorizarRole(['agricultor']), getPropriedade, async (req: Request, res: Response) => {
+router.patch('/:id', autenticarToken, autorizarRole(['agricultor']), getPropriedade, checkOverlap, async (req: Request, res: Response) => {
     if (res.propriedade) {
         if (req.body.nome != null) {
             res.propriedade.nome = req.body.nome;
         }
-        if (req.body.descricao != null) {
+        if (req.body.descricao != undefined) {
             res.propriedade.descricao = req.body.descricao;
         }
         if (req.body.areaHectares != null) {
             res.propriedade.areaHectares = req.body.areaHectares;
         }
-        if (req.body.culturaPrincipal != null) {
+        if (req.body.culturaPrincipal != undefined) {
             res.propriedade.culturaPrincipal = req.body.culturaPrincipal;
         }
         if (req.body.localizacao != null) {
             res.propriedade.localizacao = req.body.localizacao;
         }
-        if (req.body.tags != null) {
+        if (req.body.tags != undefined) {
             res.propriedade.tags = req.body.tags;
         }
-
         res.propriedade.updatedAt = new Date();
         try {
             const propriedadeAtualizada: IPropriedadeDocument = await res.propriedade.save();
