@@ -1,10 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
+//
 declare global {
     namespace Express {
         interface Request {
-            usuario?: any; // Define a propriedade usuario no objeto Request
+            usuario?: any; 
+            // Define a propriedade usuario Isso permite que o middleware
+            //'autenticarToken' anexe a informação do usuário à requisição
         }
     }
 }
@@ -27,7 +30,7 @@ function autenticarToken(req: Request, res: Response, next: NextFunction) {
         next();
     });
 }
-
+//autorizar com base na sua função 
 function autorizarRole(rolesPermitidos: string[]) {
     return (req: Request, res: Response, next: NextFunction) => {
         if (!req.usuario || !rolesPermitidos.includes(req.usuario.role)) {

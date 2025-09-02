@@ -85,22 +85,6 @@ router.get("/", async (req, res) => {
         res.status(500).json({ message: "Erro ao buscar usuários" });
     }
 });
-// Buscar usuário por ID
-router.get("/:id", auth_1.autenticarToken, async (req, res) => {
-    try {
-        // Validação de ID
-        if (!mongoose_1.default.Types.ObjectId.isValid(req.params.id)) {
-            return res.status(400).json({ message: "ID inválido fornecido" });
-        }
-        const usuario = await Usuario.findById(req.params.id);
-        if (!usuario)
-            return res.status(404).json({ message: "Usuário não encontrado" });
-        res.json(usuario);
-    }
-    catch (err) {
-        res.status(500).json({ message: "Erro ao buscar usuário" });
-    }
-});
 // Atualizar usuário 
 router.put("/:id", auth_1.autenticarToken, async (req, res) => {
     try {
@@ -108,7 +92,7 @@ router.put("/:id", auth_1.autenticarToken, async (req, res) => {
             return res.status(400).json({ message: "ID inválido fornecido" });
         }
         // Se não for admin, só pode atualizar o próprio usuário
-        if (req.user.role !== "admin" && req.user.id !== req.params.id) {
+        if (req.user.id !== req.params.id) {
             return res.status(403).json({ message: "Sem permissão para atualizar esse usuário" });
         }
         if (req.body.senha) {
@@ -129,7 +113,7 @@ router.delete("/:id", auth_1.autenticarToken, async (req, res) => {
         if (!mongoose_1.default.Types.ObjectId.isValid(req.params.id)) {
             return res.status(400).json({ message: "ID inválido fornecido" });
         }
-        if (req.user.role !== "admin" && req.user.id !== req.params.id) {
+        if (req.user.id !== req.params.id) {
             return res.status(403).json({ message: "Sem permissão para deletar esse usuário" });
         }
         const usuario = await Usuario.findByIdAndDelete(req.params.id);

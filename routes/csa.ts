@@ -17,7 +17,7 @@ router.post('/', async (req: Request, res: Response) => {
         res.status(201).json({ message: 'CSA registrada com sucesso!', data: novaCSA });
 
     } catch (err: any) {
-        if (err.code === 11000) {
+        if (err.code === 11000) { //chave duplicada
             return res.status(409).json({ message: 'Uma CSA para esta cidade e estado já existe.' });
         }
         res.status(400).json({ message: err.message });

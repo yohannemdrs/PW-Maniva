@@ -23,7 +23,7 @@ async function getPropriedade(req, res, next) {
     next();
 }
 // Rota: Obter todas as propriedades (READ ALL) - ACESSO A AMBOS OS PAPÉIS
-router.get('/', auth_1.autenticarToken, async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         const propriedades = await propriedade_1.default.find();
         res.json(propriedades);
@@ -33,7 +33,7 @@ router.get('/', auth_1.autenticarToken, async (req, res) => {
     }
 });
 // Rota: Obter uma propriedade específica (READ ONE) - ACESSO A AMBOS OS PAPÉIS
-router.get('/:id', auth_1.autenticarToken, getPropriedade, (req, res) => {
+router.get('/:id', getPropriedade, (req, res) => {
     res.json(res.propriedade);
 });
 // Rota: Criar uma nova propriedade (CREATE) - APENAS AGRICULTORES

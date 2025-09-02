@@ -21,6 +21,7 @@ function autenticarToken(req, res, next) {
         next();
     });
 }
+//autorizar com base na sua função 
 function autorizarRole(rolesPermitidos) {
     return (req, res, next) => {
         if (!req.usuario || !rolesPermitidos.includes(req.usuario.role)) {

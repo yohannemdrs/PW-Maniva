@@ -29,7 +29,7 @@ async function getPropriedade(req: Request, res: Response, next: NextFunction) {
 }
 
 // Rota: Obter todas as propriedades (READ ALL) - ACESSO A AMBOS OS PAPÉIS
-router.get('/', autenticarToken, async (req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
     try {
         const propriedades: IPropriedadeDocument[] = await Propriedade.find();
         res.json(propriedades);
@@ -39,7 +39,7 @@ router.get('/', autenticarToken, async (req: Request, res: Response) => {
 });
 
 // Rota: Obter uma propriedade específica (READ ONE) - ACESSO A AMBOS OS PAPÉIS
-router.get('/:id', autenticarToken, getPropriedade, (req: Request, res: Response) => {
+router.get('/:id', getPropriedade, (req: Request, res: Response) => {
     res.json(res.propriedade);
 });
 
