@@ -2,6 +2,101 @@
 
 Esta documentação detalha os endpoints da API PW-Maniva, que é construída com Node.js, Express e MongoDB, e agora está tipada com TypeScript para maior robustez, manutenibilidade e detecção antecipada de erros. A API utiliza autenticação via JWT para algumas rotas.
 
+## Middleware de Validação de Sobreposição de Propriedades
+
+A API utiliza um middleware para evitar o cadastro de propriedades agrícolas sobrepostas geograficamente. Isso garante que cada propriedade cadastrada ocupe uma área exclusiva no mapa.
+
+### Validação de Sobreposição de Propriedades
+
+**Middleware:** `checkOverlap`  
+**Arquivo:** `middleware/propertyValidation.ts`
+
+**Descrição:**  
+Antes de criar ou atualizar uma propriedade, o middleware verifica se já existe outra propriedade cadastrada em uma localização muito próxima (considerando o tamanho em hectares de cada uma). Se houver sobreposição, a operação é bloqueada.
+
+---
+
+#### Funcionamento do Middleware
+
+- **Cálculo do Raio da Propriedade:**  
+  O raio de cada propriedade é calculado a partir da área em hectares, considerando que 1 hectare = 10.000 m². O raio é obtido pela fórmula:  
+  `raio = sqrt(area_em_m2 / π)`
+
+- **Verificação de Sobreposição:**  
+  Para cada propriedade já cadastrada, o middleware calcula a distância entre o centro da nova propriedade e o centro da existente. Se a distância for menor que a soma dos raios das duas propriedades, considera-se que há sobreposição.
+
+- **Ignora a própria propriedade em atualizações:**  
+  Ao atualizar uma propriedade, o middleware ignora a checagem contra ela mesma.
+
+---
+
+#### Exemplo de Corpo da Requisição
+
+```json
+{
+  "nome": "Fazenda Nova",
+  "areaHectares": 50,
+  "localizacao": {
+    "type": "Point",
+    "coordinates": [-46.633309, -23.55052]
+  }
+}
+```
+
+---
+
+#### Exemplos de Respostas
+
+- **Sobreposição detectada:**
+    ```json
+    {
+      "message": "A nova propriedade se sobrepõe a uma propriedade existente."
+    }
+    ```
+
+- **Erro interno ao verificar sobreposição:**
+    ```json
+    {
+      "message": "Erro interno ao verificar sobreposição de propriedades."
+    }
+    ```
+
+- **Sem sobreposição:**  
+  A requisição segue normalmente para a próxima etapa da rota (não retorna resposta específica do middleware).
+
+---
+
+#### Exemplo de Uso nas Rotas
+
+```typescript
+router.post(
+  '/api/propriedades',
+  autenticarToken,
+  autorizarRole(['agricultor']),
+  checkOverlap,
+  async (req, res) => { ... }
+);
+
+router.patch(
+  '/api/propriedades/:id',
+  autenticarToken,
+  autorizarRole(['agricultor']),
+  checkOverlap,
+  async (req, res) => { ... }
+);
+```
+
+---
+
+#### Resumo do Fluxo
+
+1. Recebe os dados da nova propriedade (ou atualização).
+2. Calcula o raio da área informada.
+3. Busca todas as propriedades já cadastradas.
+4. Para cada uma, calcula a distância entre os centros.
+5. Se houver sobreposição, retorna erro 400.
+6. Se não houver, permite a continuação da operação.
+
 ## Autenticação
 
 Algumas rotas desta API exigem autenticação. Para acessar essas rotas, você deve incluir um token JWT válido no cabeçalho `Authorization` de suas requisições, no formato `Bearer <seu_token_jwt>`.
