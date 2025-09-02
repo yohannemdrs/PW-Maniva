@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const propriedade_1 = __importDefault(require("../models/propriedade"));
 const auth_1 = require("../middleware/auth");
+const propertyValidation_1 = require("../middleware/propertyValidation");
 const router = express_1.default.Router();
 async function getPropriedade(req, res, next) {
     let propriedade;
@@ -36,7 +37,7 @@ router.get('/:id', auth_1.autenticarToken, getPropriedade, (req, res) => {
     res.json(res.propriedade);
 });
 // Rota: Criar uma nova propriedade (CREATE) - APENAS AGRICULTORES
-router.post('/', auth_1.autenticarToken, (0, auth_1.autorizarRole)(['agricultor']), async (req, res) => {
+router.post('/', auth_1.autenticarToken, (0, auth_1.autorizarRole)(['agricultor']), propertyValidation_1.checkOverlap, async (req, res) => {
     const { nome, descricao, areaHectares, culturaPrincipal, localizacao, tags } = req.body;
     const propriedade = new propriedade_1.default({
         nome, descricao, areaHectares, culturaPrincipal, localizacao, tags
@@ -50,24 +51,24 @@ router.post('/', auth_1.autenticarToken, (0, auth_1.autorizarRole)(['agricultor'
     }
 });
 // Rota: Atualizar uma propriedade (UPDATE) - APENAS AGRICULTORES
-router.patch('/:id', auth_1.autenticarToken, (0, auth_1.autorizarRole)(['agricultor']), getPropriedade, async (req, res) => {
+router.patch('/:id', auth_1.autenticarToken, (0, auth_1.autorizarRole)(['agricultor']), getPropriedade, propertyValidation_1.checkOverlap, async (req, res) => {
     if (res.propriedade) {
         if (req.body.nome != null) {
             res.propriedade.nome = req.body.nome;
         }
-        if (req.body.descricao != null) {
+        if (req.body.descricao != undefined) {
             res.propriedade.descricao = req.body.descricao;
         }
         if (req.body.areaHectares != null) {
             res.propriedade.areaHectares = req.body.areaHectares;
         }
-        if (req.body.culturaPrincipal != null) {
+        if (req.body.culturaPrincipal != undefined) {
             res.propriedade.culturaPrincipal = req.body.culturaPrincipal;
         }
         if (req.body.localizacao != null) {
             res.propriedade.localizacao = req.body.localizacao;
         }
-        if (req.body.tags != null) {
+        if (req.body.tags != undefined) {
             res.propriedade.tags = req.body.tags;
         }
         res.propriedade.updatedAt = new Date();

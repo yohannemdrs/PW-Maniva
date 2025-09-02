@@ -1,10 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-interface ILocalizacao {
-    type: 'Point';
-    coordinates: [number, number]; // [longitude, latitude]
-}
-
 export interface IPropriedadeDocument extends Document {
     nome: string;
     descricao?: string;
@@ -14,6 +9,11 @@ export interface IPropriedadeDocument extends Document {
     tags?: string[];
     createdAt: Date;
     updatedAt: Date;
+}
+
+interface ILocalizacao {
+    type: 'Point';
+    coordinates: [number, number]; // [longitude, latitude]
 }
 
 const PropriedadeSchema = new Schema<IPropriedadeDocument>({
@@ -29,7 +29,7 @@ const PropriedadeSchema = new Schema<IPropriedadeDocument>({
     areaHectares: {
         type: Number,
         required: [true, 'A área em hectares é obrigatória'],
-        min: [3, 'A área não pode ser negativa']
+        min: [3, 'Área menor a 3ha ou negativa!']
     },
     culturaPrincipal: {
         type: String,
